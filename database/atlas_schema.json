@@ -1,0 +1,307 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PCS Enterprise Invoice Intelligence - MongoDB Atlas Architecture Specification",
+  "version": "1.0.0",
+  "database_name": "invoice_db",
+  "collections": {
+    "invoice_documents": {
+      "validator": {
+        "$jsonSchema": {
+          "bsonType": "object",
+          "required": ["invoice_id", "status", "created_at", "updated_at"],
+          "properties": {
+            "_id": { "bsonType": "string", "description": "Unique Document ID e.g., INV-8A2F90B1" },
+            "invoice_id": { "bsonType": "string" },
+            "document_type": { "bsonType": "string" },
+            "invoice": {
+              "bsonType": "object",
+              "properties": {
+                "invoice_number": { "bsonType": ["string", "null"] },
+                "invoice_date": { "bsonType": ["string", "null"] },
+                "due_date": { "bsonType": ["string", "null"] },
+                "place_of_supply": { "bsonType": ["string", "null"] },
+                "po_number": { "bsonType": ["string", "null"] },
+                "irn": { "bsonType": ["string", "null"] },
+                "qr_code_data": { "bsonType": ["string", "null"] },
+                "reverse_charge": { "bsonType": ["bool", "null"] }
+              }
+            },
+            "seller": {
+              "bsonType": "object",
+              "properties": {
+                "name": { "bsonType": ["string", "null"] },
+                "trade_name": { "bsonType": ["string", "null"] },
+                "address": { "bsonType": ["string", "null"] },
+                "gstin": { "bsonType": ["string", "null"] },
+                "pan": { "bsonType": ["string", "null"] },
+                "state": { "bsonType": ["string", "null"] },
+                "state_code": { "bsonType": ["string", "null"] },
+                "phone": { "bsonType": ["string", "null"] },
+                "email": { "bsonType": ["string", "null"] }
+              }
+            },
+            "buyer": {
+              "bsonType": "object",
+              "properties": {
+                "name": { "bsonType": ["string", "null"] },
+                "trade_name": { "bsonType": ["string", "null"] },
+                "address": { "bsonType": ["string", "null"] },
+                "gstin": { "bsonType": ["string", "null"] },
+                "pan": { "bsonType": ["string", "null"] },
+                "state": { "bsonType": ["string", "null"] },
+                "state_code": { "bsonType": ["string", "null"] },
+                "phone": { "bsonType": ["string", "null"] },
+                "email": { "bsonType": ["string", "null"] },
+                "shipping_address": { "bsonType": ["string", "null"] }
+              }
+            },
+            "summary": {
+              "bsonType": "object",
+              "properties": {
+                "total_taxable_value": { "bsonType": ["number", "int", "double", "long"] },
+                "cgst_total": { "bsonType": ["number", "int", "double", "long"] },
+                "sgst_total": { "bsonType": ["number", "int", "double", "long"] },
+                "igst_total": { "bsonType": ["number", "int", "double", "long"] },
+                "cess_total": { "bsonType": ["number", "int", "double", "long"] },
+                "total_tax": { "bsonType": ["number", "int", "double", "long"] },
+                "discount_total": { "bsonType": ["number", "int", "double", "long"] },
+                "freight_charges": { "bsonType": ["number", "int", "double", "long"] },
+                "round_off": { "bsonType": ["number", "int", "double", "long"] },
+                "grand_total": { "bsonType": ["number", "int", "double", "long"] },
+                "amount_in_words": { "bsonType": ["string", "null"] }
+              }
+            },
+            "validation": {
+              "bsonType": "object",
+              "properties": {
+                "is_gstin_seller_valid": { "bsonType": "bool" },
+                "is_gstin_buyer_valid": { "bsonType": "bool" },
+                "is_pan_seller_valid": { "bsonType": "bool" },
+                "is_pan_buyer_valid": { "bsonType": "bool" },
+                "is_tax_calculation_valid": { "bsonType": "bool" },
+                "is_grand_total_valid": { "bsonType": "bool" },
+                "is_gst_breakup_valid": { "bsonType": "bool" },
+                "is_duplicate_invoice": { "bsonType": "bool" },
+                "missing_mandatory_fields": {
+                  "bsonType": "array",
+                  "items": { "bsonType": "string" }
+                }
+              }
+            },
+            "warnings": {
+              "bsonType": "array",
+              "items": { "bsonType": "string" }
+            },
+            "overall_confidence": { "bsonType": ["number", "double"] },
+            "ai_model": { "bsonType": "string" },
+            "status": {
+              "enum": ["NEW", "VERIFIED", "REVIEW_REQUIRED", "FAILED"]
+            },
+            "is_deleted": { "bsonType": "bool" },
+            "created_at": { "bsonType": "string" },
+            "updated_at": { "bsonType": "string" }
+          }
+        }
+      },
+      "indexes": [
+        { "name": "idx_invoice_number", "key": { "invoice.invoice_number": 1 }, "background": true },
+        { "name": "idx_seller_gstin", "key": { "seller.gstin": 1 }, "background": true },
+        { "name": "idx_buyer_gstin", "key": { "buyer.gstin": 1 }, "background": true },
+        { "name": "idx_status_created", "key": { "status": 1, "created_at": -1 }, "background": true },
+        { "name": "idx_grand_total", "key": { "summary.grand_total": 1 }, "background": true },
+        { "name": "idx_text_search", "key": { "invoice.invoice_number": "text", "seller.name": "text", "buyer.name": "text" }, "background": true },
+        { "name": "idx_duplicate_check", "key": { "invoice.invoice_number": 1, "seller.gstin": 1, "summary.grand_total": 1 }, "background": true }
+      ]
+    },
+    "invoice_items": {
+      "validator": {
+        "$jsonSchema": {
+          "bsonType": "object",
+          "required": ["invoice_id", "description"],
+          "properties": {
+            "invoice_id": { "bsonType": "string" },
+            "sl_no": { "bsonType": ["int", "number"] },
+            "item_name": { "bsonType": "string" },
+            "description": { "bsonType": "string" },
+            "hsn": { "bsonType": ["string", "null"] },
+            "quantity": { "bsonType": ["number", "double"] },
+            "rate": { "bsonType": ["number", "double"] },
+            "discount": { "bsonType": ["number", "double"] },
+            "taxable_value": { "bsonType": ["number", "double"] },
+            "cgst": { "bsonType": ["number", "double"] },
+            "sgst": { "bsonType": ["number", "double"] },
+            "igst": { "bsonType": ["number", "double"] },
+            "cess": { "bsonType": ["number", "double"] },
+            "line_total": { "bsonType": ["number", "double"] },
+            "confidence": { "bsonType": ["number", "double"] }
+          }
+        }
+      },
+      "indexes": [
+        { "name": "idx_invoice_id", "key": { "invoice_id": 1 }, "background": true },
+        { "name": "idx_hsn", "key": { "hsn": 1 }, "background": true }
+      ]
+    },
+    "vendors": {
+      "validator": {
+        "$jsonSchema": {
+          "bsonType": "object",
+          "required": ["vendor_code", "vendor_name", "gstin"],
+          "properties": {
+            "vendor_code": { "bsonType": "string" },
+            "vendor_name": { "bsonType": "string" },
+            "gstin": { "bsonType": "string" },
+            "pan": { "bsonType": ["string", "null"] },
+            "address": { "bsonType": ["string", "null"] },
+            "phone": { "bsonType": ["string", "null"] },
+            "email": { "bsonType": ["string", "null"] },
+            "invoice_count": { "bsonType": "int" },
+            "total_purchase": { "bsonType": ["number", "double"] },
+            "created_at": { "bsonType": "string" },
+            "updated_at": { "bsonType": "string" }
+          }
+        }
+      },
+      "indexes": [
+        { "name": "idx_vendor_code_unique", "key": { "vendor_code": 1 }, "unique": true, "background": true },
+        { "name": "idx_vendor_gstin_unique", "key": { "gstin": 1 }, "unique": true, "background": true },
+        { "name": "idx_vendor_name", "key": { "vendor_name": 1 }, "background": true }
+      ]
+    },
+    "customers": {
+      "validator": {
+        "$jsonSchema": {
+          "bsonType": "object",
+          "required": ["customer_code", "customer_name", "gstin"],
+          "properties": {
+            "customer_code": { "bsonType": "string" },
+            "customer_name": { "bsonType": "string" },
+            "gstin": { "bsonType": "string" },
+            "pan": { "bsonType": ["string", "null"] },
+            "address": { "bsonType": ["string", "null"] },
+            "phone": { "bsonType": ["string", "null"] },
+            "email": { "bsonType": ["string", "null"] },
+            "invoice_count": { "bsonType": "int" },
+            "total_sales": { "bsonType": ["number", "double"] },
+            "created_at": { "bsonType": "string" },
+            "updated_at": { "bsonType": "string" }
+          }
+        }
+      },
+      "indexes": [
+        { "name": "idx_customer_code_unique", "key": { "customer_code": 1 }, "unique": true, "background": true },
+        { "name": "idx_customer_gstin_unique", "key": { "gstin": 1 }, "unique": true, "background": true },
+        { "name": "idx_customer_name", "key": { "customer_name": 1 }, "background": true }
+      ]
+    },
+    "gst_validation_logs": {
+      "validator": {
+        "$jsonSchema": {
+          "bsonType": "object",
+          "required": ["invoice_id", "validation_result", "timestamp"],
+          "properties": {
+            "invoice_id": { "bsonType": "string" },
+            "validation_result": { "bsonType": "object" },
+            "timestamp": { "bsonType": "string" }
+          }
+        }
+      },
+      "indexes": [
+        { "name": "idx_log_invoice_id", "key": { "invoice_id": 1 }, "background": true },
+        { "name": "idx_log_timestamp", "key": { "timestamp": -1 }, "background": true }
+      ]
+    },
+    "duplicate_invoice_logs": {
+      "validator": {
+        "$jsonSchema": {
+          "bsonType": "object",
+          "required": ["invoice_number", "timestamp"],
+          "properties": {
+            "invoice_number": { "bsonType": "string" },
+            "duplicate_ids": {
+              "bsonType": "array",
+              "items": { "bsonType": "string" }
+            },
+            "confidence": { "bsonType": ["number", "double"] },
+            "timestamp": { "bsonType": "string" }
+          }
+        }
+      },
+      "indexes": [
+        { "name": "idx_dup_invoice_number", "key": { "invoice_number": 1 }, "background": true },
+        { "name": "idx_dup_timestamp", "key": { "timestamp": -1 }, "background": true }
+      ]
+    },
+    "audit_logs": {
+      "validator": {
+        "$jsonSchema": {
+          "bsonType": "object",
+          "required": ["action", "collection", "document_id", "timestamp"],
+          "properties": {
+            "action": { "bsonType": "string" },
+            "collection": { "bsonType": "string" },
+            "document_id": { "bsonType": "string" },
+            "performed_by": { "bsonType": ["string", "null"] },
+            "timestamp": { "bsonType": "string" }
+          }
+        }
+      },
+      "indexes": [
+        { "name": "idx_audit_doc_id", "key": { "document_id": 1 }, "background": true },
+        { "name": "idx_audit_timestamp", "key": { "timestamp": -1 }, "background": true }
+      ]
+    },
+    "ai_processing_logs": {
+      "validator": {
+        "$jsonSchema": {
+          "bsonType": "object",
+          "required": ["invoice_id", "ai_model", "timestamp"],
+          "properties": {
+            "invoice_id": { "bsonType": "string" },
+            "ai_model": { "bsonType": "string" },
+            "processing_time": { "bsonType": ["number", "double"] },
+            "token_usage": {
+              "bsonType": "object",
+              "properties": {
+                "prompt_tokens": { "bsonType": "int" },
+                "completion_tokens": { "bsonType": "int" },
+                "total_tokens": { "bsonType": "int" }
+              }
+            },
+            "confidence": { "bsonType": ["number", "double"] },
+            "warnings": {
+              "bsonType": "array",
+              "items": { "bsonType": "string" }
+            },
+            "timestamp": { "bsonType": "string" }
+          }
+        }
+      },
+      "indexes": [
+        { "name": "idx_ai_invoice_id", "key": { "invoice_id": 1 }, "background": true },
+        { "name": "idx_ai_model", "key": { "ai_model": 1 }, "background": true },
+        { "name": "idx_ai_timestamp", "key": { "timestamp": -1 }, "background": true }
+      ]
+    },
+    "invoice_upload_logs": {
+      "validator": {
+        "$jsonSchema": {
+          "bsonType": "object",
+          "required": ["filename", "upload_time", "status"],
+          "properties": {
+            "filename": { "bsonType": "string" },
+            "file_size": { "bsonType": ["number", "int", "double", "long"] },
+            "file_type": { "bsonType": "string" },
+            "uploaded_by": { "bsonType": ["string", "null"] },
+            "upload_time": { "bsonType": "string" },
+            "status": { "bsonType": "string" }
+          }
+        }
+      },
+      "indexes": [
+        { "name": "idx_upload_time", "key": { "upload_time": -1 }, "background": true },
+        { "name": "idx_upload_filename", "key": { "filename": 1 }, "background": true }
+      ]
+    }
+  }
+}

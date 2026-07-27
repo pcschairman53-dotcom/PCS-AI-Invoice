@@ -1,0 +1,6 @@
+{
+  "name": "PCS Enterprise Invoice Intelligence AI",
+  "description": "Enterprise Indian GST & Tax Invoice Intelligence system for OCR-free multi-page document extraction, validation, itemization, and tax audit.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
