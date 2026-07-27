@@ -6,8 +6,8 @@ from typing import Optional, Dict, Any
 from fastapi import UploadFile, HTTPException
 import httpx
 
-from backend.config import settings
-from backend.schemas import (
+from config import settings
+from schemas import (
     GeminiInvoiceData,
     InvoiceMetadata,
     PartyDetails,
