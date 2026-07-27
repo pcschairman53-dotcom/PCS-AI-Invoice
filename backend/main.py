@@ -2,10 +2,9 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from backend.config import settings
-from backend.database import connect_to_mongo, close_mongo_connection
-from backend.routes import invoice
-
+from config import settings
+from database import connect_to_mongo, close_mongo_connection
+from routes import invoice
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await connect_to_mongo()
