@@ -2,15 +2,15 @@ from fastapi import APIRouter, HTTPException, Query, Depends, File, UploadFile, 
 from typing import List, Optional
 import uuid
 from datetime import datetime
-from backend.schemas import (
+from schemas import (
     ExtractInvoiceRequest,
     ExtractInvoiceResponse,
     InvoiceStatus,
     GeminiInvoiceData
 )
-from backend.services.validation import validate_and_audit_invoice
-from backend.services.file_upload_bridge import extract_invoice_from_file_bytes
-from backend.database import get_database
+from services.validation import validate_and_audit_invoice
+from services.file_upload_bridge import extract_invoice_from_file_bytes
+from database import get_database
 
 router = APIRouter(prefix="/api/v1/invoice", tags=["Invoice Intelligence"])
 
