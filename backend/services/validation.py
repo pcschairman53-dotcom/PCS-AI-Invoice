@@ -105,12 +105,12 @@ def validate_and_audit_invoice(
     or (invoice_data.seller.gstin[:2] if seller_gstin_valid and invoice_data.seller.gstin else None)
 )
 
-pos_state_code = (
+    pos_state_code = (
     invoice_data.buyer.state_code
     or (invoice_data.buyer.gstin[:2] if buyer_gstin_valid and invoice_data.buyer.gstin else None)
 )
 
-    gst_breakup_valid = True
+    gst_breakup_valid =True
     cgst_total = float(invoice_data.summary.cgst_total or 0.0)
     sgst_total = float(invoice_data.summary.sgst_total or 0.0)
     igst_total = float(invoice_data.summary.igst_total or 0.0)
