@@ -1,6 +1,6 @@
 import logging
 from motor.motor_asyncio import AsyncIOMotorClient
-from config import settings
+from backend.config import settings
 
 logger = logging.getLogger("uvicorn")
 

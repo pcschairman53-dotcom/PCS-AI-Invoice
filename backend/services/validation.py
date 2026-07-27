@@ -1,6 +1,6 @@
 import re
 from typing import List, Tuple, Optional
-from schemas import GeminiInvoiceData, ValidationResult, InvoiceStatus
+from backend.schemas import GeminiInvoiceData, ValidationResult, InvoiceStatus
 
 INDIAN_STATE_CODES = {
     '01': 'Jammu and Kashmir', '02': 'Himachal Pradesh', '03': 'Punjab', '04': 'Chandigarh',
